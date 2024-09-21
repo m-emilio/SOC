@@ -4,6 +4,8 @@ require 'socket'
 require 'find'
 require 'uri'
 
+#tls and ssl check for linux
+
 # Function to load a certificate from a file
 def load_certificate(file, password = nil)
   begin
@@ -195,17 +197,3 @@ directory = ARGV[0]
 hostname = ARGV[1] # Optional hostname for CN mismatch check
 password = ARGV[2] # Optional password for PKCS#12 (P12/PFX) files
 check_certificates_in_directory(directory, hostname, password)
-
-Key Additions:
-
-    TLS Version Compatibility:
-        The script checks the issue date of the certificate to warn if it predates mid-2016, which may indicate compatibility with weak TLS 1.0 or TLS 1.1 versions.
-
-    Signature Algorithm Compatibility:
-        Added checks for signature algorithms that are compatible with TLS 1.2 or TLS 1.3. If the certificate uses a weaker algorithm like SHA-1 or MD5, it warns that the certificate is not suitable for modern TLS protocols.
-
-    Public Key Compatibility:
-        Checks that RSA keys are at least 2048 bits for TLS 1.2 or TLS 1.3 compatibility.
-        For ECDSA, it ensures the certificate uses a strong elliptic curve, such as secp256r1, secp384r1, or secp521r1, which are required for secure TLS communication.
-
-This script now includes a comprehensive set of checks related to the certificate's compatibility with secure TLS versions and ciphersuites, enhancing its ability to assess the overall security of certificates in your environment.
