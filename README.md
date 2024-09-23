@@ -2,8 +2,7 @@
 
 #ssltls.rb - Ruby script to verify mismatched certificate cn, expiration, weak ciphers and keys, revocation check (CRL or OCSP), TLS compatiblity.
 
-./check_certificates.rb <directory> [hostname] [password]
 
-example: ./ssltls.rb /etc/ssl/certs example.com mypassword
+example: ./ssltls.rb <directory> [hostname] [password]  |  ./ssltls.rb /etc/ssl/certs example.com mypassword
 
 
