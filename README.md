@@ -1,7 +1,7 @@
-# MalwareCheck.ps1
+# MalwareCheck.ps1 - Check PS scripts for possible malware
 Modify the $directoryPath variable to the folder containing the PowerShell scripts you want to analyze.
 
-# NetworkScan.rb
+# NetworkScan.rb - Scan system for known vulnerable ports or IP addresses.
 Modify KNOWN_MALICIOUS_IPS, VULNERABLE_PORTS to refine the scan, designed for Linux, Windows and MacOS
 
 # ssltls -  Scripts to verify mismatched certificate cn, expiration, weak ciphers and keys, revocation check (CRL or OCSP), TLS compatiblity. Ruby and Powershell.
