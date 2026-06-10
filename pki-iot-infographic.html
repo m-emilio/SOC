@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PKI for IoT / ARM / Linux</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;600;700&family=Barlow+Condensed:wght@700;900&display=swap');
+
+  :root {
+    --bg:       #0a0f14;
+    --panel:    #0f1820;
+    --border:   #1a2e3a;
+    --accent1:  #00d4ff;  /* cyan — primary highlight */
+    --accent2:  #ff6b35;  /* burnt orange — warning/contrast */
+    --accent3:  #39ff14;  /* terminal green — data/code */
+    --muted:    #4a7a8a;
+    --text:     #c8d8e0;
+    --bright:   #eaf4f8;
+    --mono:     'Share Tech Mono', monospace;
+    --sans:     'Inter', sans-serif;
+    --display:  'Barlow Condensed', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    min-width: 900px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 60px 36px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent1);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 0.95;
+    color: var(--bright);
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+
+  h1 span {
+    color: var(--accent1);
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 12px;
+    font-family: var(--mono);
+  }
+
+  .header-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent3);
+    border: 1px solid var(--accent3);
+    padding: 3px 10px;
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  .grid-wide {
+    grid-column: span 3;
+  }
+
+  .grid-half {
+    grid-column: span 1;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--panel);
+    padding: 28px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+
+  .panel.c1::before { background: var(--accent1); }
+  .panel.c2::before { background: var(--accent2); }
+  .panel.c3::before { background: var(--accent3); }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .panel h2 {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--bright);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 18px;
+    line-height: 1.1;
+  }
+
+  .panel h2 .hl { color: var(--accent1); }
+  .panel.c2 h2 .hl { color: var(--accent2); }
+  .panel.c3 h2 .hl { color: var(--accent3); }
+
+  /* ── ITEM ROWS ── */
+  .item {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 10px 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .item:last-child { border-bottom: none; }
+
+  .item-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent1);
+    padding-top: 1px;
+  }
+
+  .panel.c2 .item-key { color: var(--accent2); }
+  .panel.c3 .item-key { color: var(--accent3); }
+
+  .item-val {
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .item-val strong {
+    color: var(--bright);
+    font-weight: 600;
+  }
+
+  .item-val .note {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* ── CHIP LIST ── */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid;
+    letter-spacing: 0.06em;
+  }
+
+  .chip.c1 { color: var(--accent1); border-color: var(--accent1); background: rgba(0,212,255,0.06); }
+  .chip.c2 { color: var(--accent2); border-color: var(--accent2); background: rgba(255,107,53,0.06); }
+  .chip.c3 { color: var(--accent3); border-color: var(--accent3); background: rgba(57,255,20,0.06); }
+
+  /* ── WIDE PANEL: THREATS ── */
+  .threat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 4px;
+  }
+
+  .threat-card {
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    position: relative;
+  }
+
+  .threat-card::after {
+    content: attr(data-sev);
+    position: absolute;
+    top: 8px; right: 10px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+
+  .threat-card[data-sev="HIGH"]::after  { color: var(--accent2); }
+  .threat-card[data-sev="MED"]::after   { color: #f0c040; }
+  .threat-card[data-sev="CRIT"]::after  { color: #ff3333; }
+
+  .threat-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--bright);
+    margin-bottom: 7px;
+  }
+
+  .threat-body {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── CA INFRA ── */
+  .ca-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .ca-card {
+    border: 1px solid var(--border);
+    padding: 14px;
+  }
+
+  .ca-name {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--bright);
+    text-transform: uppercase;
+  }
+
+  .ca-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent3);
+    margin: 3px 0 8px;
+  }
+
+  .ca-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 20px 60px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer .left {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+
+  .pipe-step {
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--panel);
+  }
+
+  .pipe-step.active {
+    border-color: var(--accent1);
+    color: var(--accent1);
+    background: rgba(0,212,255,0.07);
+  }
+
+  .pipe-arrow {
+    color: var(--border);
+    font-size: 14px;
+    margin: 0 -1px;
+    z-index: 1;
+  }
+
+  /* ── SCANLINE EFFECT (subtle) ── */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ── STAT BAND ── */
+  .stat-band {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .stat {
+    background: var(--bg);
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--accent1);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="header-eyebrow">// PKI Capability Reference — IoT Deployment Context</div>
+    <h1>PKI for<br><span>IoT</span> /<br>ARM / Linux</h1>
+    <div class="header-sub">Crypto libraries · Certificate lifecycle · Key storage · Threat model · CA infrastructure</div>
+  </div>
+  <div class="header-tags">
+    <div class="tag">ARM CORTEX-A/M</div>
+    <div class="tag">LINUX EMBEDDED</div>
+    <div class="tag">CONSTRAINED DEVICES</div>
+    <div class="tag">FIPS 140-2/3</div>
+    <div class="tag">ZERO TRUST</div>
+  </div>
+</header>
+
+<!-- STAT BAND -->
+<div class="stat-band">
+  <div class="stat">
+    <div class="stat-num">P-256</div>
+    <div class="stat-label">Preferred Curve</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">~16KB</div>
+    <div class="stat-label">WolfSSL Min Footprint</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">10×</div>
+    <div class="stat-label">ECDSA vs RSA Speed on ARM</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">AES-128</div>
+    <div class="stat-label">Symmetric (HW Accel)</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">EST</div>
+    <div class="stat-label">Preferred Enrollment</div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+
+  <!-- ROW 1: CONSTRAINTS + CRYPTO LIBS + ALGORITHMS -->
+
+  <div class="panel c2 grid-half">
+    <div class="panel-label">// 01 — Environment</div>
+    <h2>Resource <span class="hl">Constraints</span></h2>
+
+    <div class="item">
+      <div class="item-key">RAM / Flash</div>
+      <div class="item-val">Limited headroom — full OpenSSL stack often too large. Budget carefully for TLS buffers.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Hardware RNG</div>
+      <div class="item-val"><strong>Absent on older silicon.</strong>
+        <span class="note">Use Linux /dev/urandom + entropy seeding from hardware events. Audit entropy at boot.</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-key">CPU Speed</div>
+      <div class="item-val">RSA-2048 keygen is costly — 2–8s on low-MHz Cortex-M. <strong>Avoid RSA-4096, DH, classic DSA.</strong></div>
+    </div>
+    <div class="item">
+      <div class="item-key">Persistent Storage</div>
+      <div class="item-val">Some devices lack secure flash. Key material may need re-provisioning on each boot.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">No FPU</div>
+      <div class="item-val">ECC over prime fields (P-256) handles well in integer arithmetic — no float needed.</div>
+    </div>
+  </div>
+
+  <div class="panel c1 grid-half">
+    <div class="panel-label">// 02 — TLS / Crypto Libraries</div>
+    <h2>Library <span class="hl">Selection</span></h2>
+
+    <div class="item">
+      <div class="item-key">Mbed TLS</div>
+      <div class="item-val"><strong>ARM-native, purpose-built for embedded.</strong>
+        <span class="note">Modular — compile only what you need. FIPS-certifiable builds. Backed by Arm Ltd.</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-key">WolfSSL</div>
+      <div class="item-val"><strong>~16–20KB flash, FIPS 140-2 cert available.</strong>
+        <span class="note">Strong IoT track record. PKCS#11 and TPM integrations. Commercial support available.</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="item-key">BoringSSL</div>
+      <div class="item-val">Hardened OpenSSL fork — use when you have headroom and need a hardened, maintained base.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">LibreSSL</div>
+      <div class="item-val">Cleaner codebase than OpenSSL, reasonable footprint. Good for standard Linux targets.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">OpenSSL</div>
+      <div class="item-val">Avoid on constrained hardware. Use only on full Linux systems with ample resources.</div>
+    </div>
+  </div>
+
+  <div class="panel c3 grid-half">
+    <div class="panel-label">// 03 — Cryptography</div>
+    <h2>Algorithm <span class="hl">Choices</span></h2>
+
+    <div class="item">
+      <div class="item-key">ECDSA P-256</div>
+      <div class="item-val"><strong>Primary recommendation.</strong> ~10× faster than RSA on ARM with no FPU. Small certs.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Ed25519</div>
+      <div class="item-val">Very fast on ARM Cortex-A/M, compact keys. Use if your TLS library supports it (check version).</div>
+    </div>
+    <div class="item">
+      <div class="item-key">AES-128-GCM</div>
+      <div class="item-val"><strong>HW acceleration often present even on older ARM SoCs.</strong> Prefer over ChaCha on Cortex-A.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">RSA-2048</div>
+      <div class="item-val">Acceptable for issuing CAs (offline ops). <strong>Never generate on-device.</strong> Pre-provision only.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Avoid</div>
+      <div class="item-val">
+        <div class="chips">
+          <span class="chip c2">RSA-4096</span>
+          <span class="chip c2">Classic DH</span>
+          <span class="chip c2">Classic DSA</span>
+          <span class="chip c2">MD5 / SHA-1</span>
+          <span class="chip c2">3DES</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: ENROLLMENT + KEY STORAGE -->
+
+  <div class="panel c1">
+    <div class="panel-label">// 04 — Certificate Enrollment</div>
+    <h2>Enrollment <span class="hl">Protocols</span></h2>
+
+    <div class="item">
+      <div class="item-key">EST (RFC 7030)</div>
+      <div class="item-val"><strong>Top pick for Linux IoT.</strong> HTTPS-based, lightweight client, works behind NAT. Supports re-enrollment and key refresh natively.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">SCEP</div>
+      <div class="item-val">Older but widely supported across device vendors. Good for legacy fleet compatibility. Simpler client implementation.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">ACME</div>
+      <div class="item-val">Overkill for most IoT — requires reliable DNS and internet. Useful only for internet-facing gateways.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Pre-provisioning</div>
+      <div class="item-val"><strong>Best for truly constrained devices.</strong> Inject identity cert + key at manufacture or flash time. No on-device enrollment needed.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Zero-Touch</div>
+      <div class="item-val">Combine EST + device attestation (IDevID → LDevID) for automated fleet onboarding per IEEE 802.1AR.</div>
+    </div>
+  </div>
+
+  <div class="panel c2">
+    <div class="panel-label">// 05 — Key Material</div>
+    <h2>Key <span class="hl">Storage</span></h2>
+
+    <div class="item">
+      <div class="item-key">ARM TrustZone</div>
+      <div class="item-val"><strong>Gold standard if SoC supports it.</strong> Isolate key ops in secure world via OP-TEE (open-source TEE). Keys never leave secure world.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">TPM / SE</div>
+      <div class="item-val">Hardware secure element provides tamper-resistant key storage. Use PKCS#11 to interface with it from Linux userspace.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Encrypted FS</div>
+      <div class="item-val">If no HW root of trust: encrypt key store with a KEK derived from device-unique secret (burned fuses, serial). dm-crypt / eCryptfs.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">tmpfs + re-provision</div>
+      <div class="item-val">Store keys in RAM only; re-provision from CA on each boot via EST. No key persisted on flash at all.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">PKCS#11</div>
+      <div class="item-val"><strong>Standardize key access</strong> regardless of underlying backend (SW token, TPM, HSM). Enables CA infra interop.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Never</div>
+      <div class="item-val">
+        <div class="chips">
+          <span class="chip c2">Plaintext keys on flash</span>
+          <span class="chip c2">Hardcoded keys in firmware</span>
+          <span class="chip c2">World-readable key files</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel c3">
+    <div class="panel-label">// 06 — CA Infrastructure</div>
+    <h2>Lightweight <span class="hl">CA Options</span></h2>
+    <div class="ca-row">
+      <div class="ca-card">
+        <div class="ca-name">step-ca</div>
+        <div class="ca-meta">Smallstep · Modern · REST/ACME/EST</div>
+        <div class="ca-desc">Best-fit for IoT fleet management. Easy deployment, strong automation, good docs. Supports ACME, EST, SCEP, JWK.</div>
+      </div>
+      <div class="ca-card">
+        <div class="ca-name">EJBCA</div>
+        <div class="ca-meta">Enterprise · Heavy · Full-featured</div>
+        <div class="ca-desc">Full PKI platform. Use for large device populations needing RA workflows, audit trails, HSM integration.</div>
+      </div>
+      <div class="ca-card">
+        <div class="ca-name">cfssl</div>
+        <div class="ca-meta">Cloudflare · Simple · Scriptable</div>
+        <div class="ca-desc">Clean Go CLI and API. Ideal for automated cert pipelines, CI/CD signing, and internal service mesh PKI.</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="item">
+        <div class="item-key">Dogtag / FreeIPA</div>
+        <div class="item-val">Strong choice for Red Hat / Linux-heavy environments. Integrated LDAP, Kerberos, and CA management.</div>
+      </div>
+      <div class="item">
+        <div class="item-key">CA Hierarchy</div>
+        <div class="item-val"><strong>Offline Root → Online Issuing CA</strong> is minimum viable for any production IoT deployment.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: THREAT MODEL -->
+  <div class="panel c2 grid-wide" style="border-top: 1px solid var(--border);">
+    <div class="panel-label">// 07 — Threat Model</div>
+    <h2>Attack Surface & <span class="hl">Defensive Posture</span></h2>
+    <div class="threat-grid">
+      <div class="threat-card" data-sev="CRIT">
+        <div class="threat-title">Rogue CA / Cert</div>
+        <div class="threat-body">Attacker installs rogue root or intercepts enrollment. Mitigate: certificate transparency, pinning on constrained devices, strict trust anchor management.</div>
+      </div>
+      <div class="threat-card" data-sev="CRIT">
+        <div class="threat-title">Key Extraction</div>
+        <div class="threat-body">Physical access to device enables flash dump or JTAG key extraction. Mitigate: TrustZone, secure boot, fuse-locked keys, no plaintext key on flash.</div>
+      </div>
+      <div class="threat-card" data-sev="HIGH">
+        <div class="threat-title">MITM via Downgrade</div>
+        <div class="threat-body">Force TLS 1.0/1.1 or weak cipher suites. Mitigate: enforce TLS 1.2+ minimum, disable weak ciphers in Mbed/WolfSSL config at compile time.</div>
+      </div>
+      <div class="threat-card" data-sev="HIGH">
+        <div class="threat-title">Cert Expiry / No Revocation</div>
+        <div class="threat-body">Offline devices miss CRL/OCSP updates. Certs expire silently. Mitigate: short-lived certs + automated EST re-enrollment, stapled OCSP, Delta CRLs.</div>
+      </div>
+      <div class="threat-card" data-sev="HIGH">
+        <div class="threat-title">Entropy Starvation</div>
+        <div class="threat-body">Low-entropy boot causes weak key generation. Mitigate: seed /dev/urandom from hardware events, use ATECC608 or similar entropy source, delay keygen until entropy pools are full.</div>
+      </div>
+      <div class="threat-card" data-sev="MED">
+        <div class="threat-title">Firmware Signing Bypass</div>
+        <div class="threat-body">Modified firmware bypasses cert-based auth. Mitigate: secure boot (U-Boot verified boot, ARM Trusted Firmware), sign firmware images with code-signing PKI.</div>
+      </div>
+      <div class="threat-card" data-sev="MED">
+        <div class="threat-title">Rogue Device Enrollment</div>
+        <div class="threat-body">Cloned device ID enrolls fraudulently. Mitigate: IDevID (factory-installed identity) + attestation, RA policies requiring hardware attestation before cert issuance.</div>
+      </div>
+      <div class="threat-card" data-sev="MED">
+        <div class="threat-title">Side-Channel Attacks</div>
+        <div class="threat-body">Timing / power analysis on crypto ops. Mitigate: use constant-time ECC implementations (Mbed TLS has options), avoid homegrown crypto, physical shielding if required.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4: STANDARDS + PQ -->
+  <div class="panel c1">
+    <div class="panel-label">// 08 — Compliance & Standards</div>
+    <h2>Gov / Federal <span class="hl">Standards</span></h2>
+    <div class="item">
+      <div class="item-key">NIST SP 800-57</div>
+      <div class="item-val">Key management lifecycle guidance. Authoritative reference for key generation, storage, distribution, and destruction policies.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">FIPS 140-2 / 3</div>
+      <div class="item-val">WolfSSL and Mbed TLS both offer FIPS-validated builds. Required for federal-adjacent deployments handling sensitive data.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">FPKI</div>
+      <div class="item-val">Federal PKI cross-certification. Device certs that need to chain to federal trust anchors must follow FPKI policies.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">DoD PKI</div>
+      <div class="item-val">CAC/PIV for operators; device identity certs from DoD-issued CAs. Devices may need to validate DoD intermediate CAs.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">IEEE 802.1AR</div>
+      <div class="item-val">IDevID / LDevID standard for device identity. Foundation for zero-touch provisioning and supply chain integrity.</div>
+    </div>
+  </div>
+
+  <div class="panel c3">
+    <div class="panel-label">// 09 — Future Readiness</div>
+    <h2>Post-Quantum <span class="hl">Readiness</span></h2>
+    <div class="item">
+      <div class="item-key">NIST PQC</div>
+      <div class="item-val"><strong>ML-KEM (Kyber), ML-DSA (Dilithium), SLH-DSA (SPHINCS+)</strong> finalized. Plan migration path now for long-lived device fleets.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">ARM Impact</div>
+      <div class="item-val">PQ algorithms are compute-heavy. ML-DSA on Cortex-M4 is feasible; SLH-DSA is very slow. Evaluate per device class.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Hybrid Mode</div>
+      <div class="item-val">Run classical ECDSA + ML-DSA in hybrid during transition. Both must fail for compromise. Supported in OQS-BoringSSL fork.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">OQS Project</div>
+      <div class="item-val">Open Quantum Safe provides liboqs + integrations for OpenSSL, BoringSSL, WolfSSL. Start evaluation now on test hardware.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Timeline</div>
+      <div class="item-val">Devices deployed today with 10+ year lifespans should have a PQ migration path in their firmware update architecture.</div>
+    </div>
+  </div>
+
+  <div class="panel c1">
+    <div class="panel-label">// 10 — Monitoring & Ops</div>
+    <h2>PKI <span class="hl">Operations</span></h2>
+    <div class="item">
+      <div class="item-key">Cert Transparency</div>
+      <div class="item-val">Log all issued certs to a CT log. Enables detection of rogue issuance. Critical for internet-facing device gateways.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Revocation</div>
+      <div class="item-val">OCSP stapling preferred for constrained clients. Delta CRLs for offline-capable devices. Pre-fetch and cache on device.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Short-Lived Certs</div>
+      <div class="item-val"><strong>24–72hr cert lifetime</strong> eliminates revocation complexity. Requires reliable EST re-enrollment. Best practice for zero-trust IoT.</div>
+    </div>
+    <div class="item">
+      <div class="item-key">Audit Logging</div>
+      <div class="item-val">Log all CA issuance events, enrollment requests, and key operations to tamper-evident store (syslog-ng, Loki, or HSM audit log).</div>
+    </div>
+    <div class="item">
+      <div class="item-key">mTLS</div>
+      <div class="item-val">Mutual TLS for all device-to-service communication. Both sides present certificates. Zero-trust network foundation.</div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="left">PKI / IoT / ARM / Linux — Capability Reference &nbsp;·&nbsp; UNCLASSIFIED REFERENCE</div>
+  <div class="pipeline">
+    <div class="pipe-step active">Device Identity</div>
+    <div class="pipe-arrow">›</div>
+    <div class="pipe-step active">EST Enrollment</div>
+    <div class="pipe-arrow">›</div>
+    <div class="pipe-step active">TrustZone Key</div>
+    <div class="pipe-arrow">›</div>
+    <div class="pipe-step active">mTLS Session</div>
+    <div class="pipe-arrow">›</div>
+    <div class="pipe-step">PQ Migration</div>
+  </div>
+</footer>
+
+</body>
+</html>
