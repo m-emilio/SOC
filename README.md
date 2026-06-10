@@ -16,3 +16,14 @@ IDS Middleware (Advisory + Enforce)
 # review_tool.rb
 
 for displaying IDS recommendations
+
+# pki-iot-infographic.html
+The infographic covers all 10 sections in a dark terminal aesthetic suited to the subject matter:
+
+Stat band at the top with key quick-reference numbers
+Constraints, Crypto Libraries, Algorithms — the foundational three
+Enrollment Protocols & Key Storage — operational details
+CA Infrastructure — with cards for each option
+Threat Model — 8 threat cards with severity ratings (CRIT / HIGH / MED)
+Gov Standards, Post-Quantum Readiness, PKI Ops — the compliance and forward-looking sections
+Pipeline footer showing the device identity → PQ migration flow
